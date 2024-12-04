@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Camera Access with Save Photo</title>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    video, canvas {
+      border: 2px solid black;
+      width: 100%;
+      max-width: 500px;
+      height: auto;
+      margin-bottom: 20px;
+    }
+
+    button {
+      margin: 5px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    #downloadLink {
+      display: none;
+      margin-top: 10px;
+      text-decoration: none;
+      color: white;
+      background-color: #007BFF;
+      padding: 10px 20px;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Camera Access with Save Photo</h1>
+  <video id="video" autoplay style="display: none;"></video>
+  <canvas id="canvas" style="display: none;"></canvas>
+  <button id="openCameraButton">Open Camera</button>
+  <button id="captureButton" style="display: none;">Capture Photo</button>
+  <button id="stopButton" style="display: none;">Stop Camera</button>
+  <a id="downloadLink" download="captured_photo.png">Download Photo</a>
+  <div id="output"></div>
+
+  <script>
+    const videoElement = document.getElementById('video');
+    const canvasElement = document.getElementById('canvas');
+    const openCameraButton = document.getElementById('openCameraButton');
+    const captureButton = document.getElementById('captureButton');
+    const stopButton = document.getElementById('stopButton');
+    const downloadLink = document.getElementById('downloadLink');
+    const outputDiv = document.getElementById('output');
+    let stream;
+
+    // Open the camera
+    openCameraButton.addEventListener('click', async () => {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        videoElement.srcObject = stream;
+
+        // Show the video and relevant buttons
+        videoElement.style.display = 'block';
+        captureButton.style.display = 'inline-block';
+        stopButton.style.display = 'inline-block';
+        openCameraButton.style.display = 'none'; // Hide the "Open Camera" button
+      } catch (error) {
+        console.error("Error accessing the camera:", error);
+        alert("Unable to access the camera. Please check your browser permissions.");
+      }
+    });
+
+    // Stop the camera
+    stopButton.addEventListener('click', () => {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        videoElement.srcObject = null;
+      }
+
+      // Hide video and buttons, show "Open Camera" button again
+      videoElement.style.display = 'none';
+      captureButton.style.display = 'none';
+      stopButton.style.display = 'none';
+      openCameraButton.style.display = 'inline-block';
+      downloadLink.style.display = 'none'; // Hide download link
+    });
+
+    // Capture the photo
+    captureButton.addEventListener('click', () => {
+      const context = canvasElement.getContext('2d');
+      canvasElement.width = videoElement.videoWidth;
+      canvasElement.height = videoElement.videoHeight;
+
+      // Draw the current frame from the video onto the canvas
+      context.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
+
+      // Convert the canvas content to a data URL (image format)
+      const imageDataURL = canvasElement.toDataURL('image/png');
+
+      // Set the Data URL as the href of the download link
+      downloadLink.href = imageDataURL;
+      downloadLink.style.display = 'inline-block'; // Show the download link
+    });
+  </script>
+</body>
+</html>
